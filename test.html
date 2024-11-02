@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>AJAX CRUD Example</h1>
+    
+    <!-- Data Listing Section -->
+    <section>
+        <h2>Data List</h2>
+        <div id="dataList"></div>
+    </section>
+    
+    <!-- Add New Data Section -->
+    <section class="controls">
+        <h2>Add New Data</h2>
+        <input type="text" id="newData" placeholder="Enter new data" />
+        <button onclick="addData()">Add</button>
+    </section>
+
+    <script>
+        const apiUrl = 'https://localhost:3001/items'; // Replace with your API URL
+
+        // Function to fetch and display data
+        function getData() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const dataList = document.getElementById("dataList");
+                    dataList.innerHTML = '';
+                    data.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "item";
+                        div.innerHTML = `
+                            <p><strong>ID:</strong> ${item.id}</p>
+                            <p><strong>Title:</strong> <span id="title-${item.id}">${item.title}</span></p>
+                            <button onclick="editData(${item.id})">Edit</button>
+                            <button onclick="deleteData(${item.id})">Delete</button>
+                        `;
+                        dataList.appendChild(div);
+                    });
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Function to add new data
+        function addData() {
+            const title = document.getElementById("newData").value;
+            if (!title) {
+                alert("Please enter data to add.");
+                return;
+            }
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert("Data added successfully.");
+                    document.getElementById("newData").value = '';
+                    fetchData();
+                })
+                .catch(error => console.error('Error adding data:', error));
+        }
+
+        // Function to edit data
+        function editData(id) {
+            const newTitle = prompt("Enter new title:");
+            if (!newTitle) return;
+
+            fetch(`${apiUrl}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: newTitle })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert("Data updated successfully.");
+                    document.getElementById(`title-${id}`).innerText = newTitle;
+                })
+                .catch(error => console.error('Error updating data:', error));
+        }
+
+        // Function to delete data
+        function deleteData(id) {
+            fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Data deleted successfully.");
+                        fetchData();
+                    } else {
+                        console.error('Error deleting data:', response);
+                    }
+                })
+                .catch(error => console.error('Error deleting data:', error));
+        }
+
+        // Load data initially
+        window.onload = fetchData;
+    </script>
+</body>
+</html>

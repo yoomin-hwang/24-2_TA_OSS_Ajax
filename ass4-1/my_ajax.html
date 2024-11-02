@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <h1>Student AJAX PAGE</h1>
+        <div>
+            <input type="text" placeholder="student name" id="name">
+            <input type="text" placeholder="student age" id="age">
+            <button id="add">add student</button>
+        </div>
+        <div>
+            <h2>List</h2>
+            <button id="stu" onclick="getStudents()">get students data</button>
+            <div id="contents" style="background-color: ivory;"></div>
+        </div>
+    </div>
+    <script>
+        window.onload = function () {
+            getStudents();
+            // let stu = document.getElementById("stu");
+            let add = document.getElementById("add");
+            // add.addEventListener("click", getStudents);
+            add.addEventListener("click", postData);
+        }
+
+        function getStudents() {
+            let contents = document.getElementById("contents");
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("GET", "http://localhost:3001/students");
+            xhr.setRequestHeader("content-type", "application/json");
+            xhr.send();
+
+            xhr.onload = () => {
+                if(xhr.status === 200) {
+                    const res = JSON.parse(xhr.response);
+                    contents.innerHTML = makeList(res);
+                    console.log(xhr.status, xhr.statusText);
+                }
+                else {
+                    console.log(xhr.status, xhr.statusText);
+                }
+            }
+        }
+
+        function postData () {
+            let contents = document.getElementById("contents");
+            let l = contents.querySelectorAll("li").length;
+            let name = document.getElementById("name");
+            let age = document.getElementById("age");
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "http://localhost:3001/students");
+            xhr.setRequestHeader("content-type", "application/json; charset=UTF-8");
+            const data = {
+                id: l + 1,
+                name: name.value,
+                age: age.value
+            };
+
+            xhr.send(JSON.stringify(data));
+            xhr.onload = () => {
+                if(xhr.status === 201) {
+                    name.value = "";
+                    age.value = "";
+                    const res = JSON.parse(xhr.response);
+                    getStudents();
+                } else {
+                    console.log(xhr.status, xhr.statusText);
+                }
+            }
+        }
+
+        function updateData (id) {
+            const xhr = new XMLHttpRequest();
+            xhr.open("PUT", `http://localhost:3001/students/${id}`);
+            xhr.setRequestHeader("content-type", "application/json; charset=UTF-8");
+            // console.log(document.getElementById(`newage-${id}`));
+            const data = {
+                name: document.getElementById(`newname-${id}`).value,
+                age: document.getElementById(`newage-${id}`).value
+            }
+            xhr.send(JSON.stringify(data));
+
+            xhr.onload = () => {
+                if(xhr.status === 200) {
+                    const res = JSON.parse(xhr.response);
+                    console.log(res);
+                    getStudents();
+                }
+                else {
+                    console.log(xhr.status, xhr.statusText);
+                }
+            }
+        }
+
+        function deleteData (id) {
+            const xhr = new XMLHttpRequest();
+            xhr.open("DELETE", `http://localhost:3001/students/${id}`);
+            xhr.send();
+
+            xhr.onload = () => {
+                if(xhr.status === 200) {
+                    alert("삭제 성공");
+                    getStudents();
+                }
+                else {
+                    console.log(xhr.status, xhr.statusText);
+                }
+            }
+        }
+
+        function makeList (data) {
+            let str = "<ul>";
+            data.forEach(item => {
+                str += makeItemHtml(item);
+            });
+            str += "</ul>";
+            return str;
+        }
+
+        function makeItemHtml(item) {
+            return `
+                <li id="item-${item.id}">
+                    <h3>${item.name}</h3>
+                    <div>age: ${item.age}</div>
+                    <h3>Update Data</h3>
+                    <div>
+                        <input type="text" placeholder="new name" id="newname-${item.id}" value="${item.name}" />
+                        <input type="text" placeholder="new age" id="newage-${item.id}" value="${item.age}" />
+                        <button id="update-${item.id}" onclick="updateData(${item.id})">update</button>
+                    </div>
+                    <button id="delete-${item.id}" onclick="deleteData(${item.id})">delete</button>
+                </li>
+            `;
+        }
+    </script>
+</body>
+</html>
